@@ -19,6 +19,10 @@ app.delete("/delete",(req,res)=>{
     res.send("delete the data sucessfully")
 })
 
+app.get("/data",(req,res)=>{
+    res.send("data sucessfully")
+})
+
 app.use("/",(req,res)=>{
     res.send("hellowesefweg")
 })
