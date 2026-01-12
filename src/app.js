@@ -4,13 +4,11 @@ const app = express();
 
 const {userAuth} = require("./middleware/auth")
 
-// app.get("/detail/:user_id",(req,res)=>{
-//     //console.log(req.query);
+const connectDB = require("./config/database")
 
-//     console.log(req.params.user_id);
+const User = require("./model/user");
 
-//     res.send("get the details of data")
-// })
+
 
 // app.post("/insert",(req,res)=>{
 //     res.send("inserted data successfully")
@@ -64,27 +62,59 @@ const {userAuth} = require("./middleware/auth")
 // });
 
 
-app.get ("/user/data", userAuth, (req, res) => {
-    try {
-    console.log("fetching user data");
-    res.send("user data successfully");
-    } catch (error) {
-         res.status(401).send("unauthenticated user is comming from middleware");
-    }
-});
+// app.get ("/user/data", userAuth, (req, res) => {
+//     try {
+//     console.log("fetching user data");
+//     res.send("user data successfully");
+//     } catch (error) {
+//          res.status(401).send("unauthenticated user is comming from middleware");
+//     }
+// });
 
 // Catch-all for unmatched routes (404)
-app.use((req, res, next) => {
-    const error = new Error("No route matched - 404 Not Found");
-    error.status = 404;
-    next(error); // Pass to error middleware
-});
+// app.use((req, res, next) => {
+//     const error = new Error("No route matched - 404 Not Found");
+//     error.status = 404;
+//     next(error); // Pass to error middleware
+// });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    res.status(err.status || 500).send(err.message || "Internal server error");
-});
+// // Error handling middleware
+// app.use((err, req, res, next) => {
+//     res.status(err.status || 500).send(err.message || "Internal server error");
+// });
 
-app.listen(4000, () => {
+app.post("/insert", async (req, res) => {
+  const userobj = {
+    name: "kamalakar",
+    email: "kamlakar@external,com",
+    password: "password123",
+}
+    const user = new User(userobj);
+
+    try {
+    await user.save();
+    res.send("user inserted successfully");
+    } catch (error) {
+    res.status(500).send("error inserting user" + error.message);
+    }
+})
+
+
+
+
+connectDB()  // Start the server after establishing database connection
+.then(() => {
+    console.log("Database connected successfully");
+    app.listen(4000, () => {
   console.log("listing port 4000");
 });
+
+})
+.catch((err)=>{
+    console.error("Database connection failed:", err);
+})
+
+
+// app.listen(4000, () => {
+//   console.log("listing port 4000");
+// })
