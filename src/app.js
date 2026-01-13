@@ -1,13 +1,11 @@
 const express = require("express");
-
 const app = express();
-
 const { userAuth } = require("./middleware/auth");
-
 const connectDB = require("./config/database");
-
 const User = require("./model/user");
 const { get } = require("mongoose");
+const { validateSignUpData } = require("./utils/validation");
+const brcypt = require("bcrypt");
 
 app.use(express.json()); // middlware to convert json to object
 
@@ -66,30 +64,74 @@ app.delete("/deleteUser", async (req, res) => {
   }
 });
 
+app.post("/signup", async (req, res) => {
+  //validation of data using helper function
+  try {
+    validateSignUpData(req);
+
+    const { password } = req.body;
+//encrypt the password before saving to db
+    const passwordHash = await brcypt.hash(password, 10);
+  console.log(passwordHash);
+  
+ const user = new User({
+    name: req.body.name,
+    email: req.body.email,
+    age     : req.body.age, 
+    gender  : req.body.gender,
+    password: passwordHash
+ });
+
+    await user.save();
+    res.send("user registered successfully");
+  } catch (error) {
+    res.status(500).send("error registering user" + error.message);
+  }
+});
+
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;      
+    const user = await User.findOne({ email: email });
+   
+    if (!user) {
+      return res.status(404).send("user not found");
+    }
+    
+    const isPasswordMatch = await brcypt.compare(password, user.password);
+    if (!isPasswordMatch) {
+      return res.status(401).send("invalid password");
+    }           
+    res.send("login successful");
+  } catch (error) {
+    res.status(400).send("error logging in :" + error.message);
+  }
+
+});
+
 app.patch("/updateUser", async (req, res) => {
-    const user_id = req.body.user_id;
-    const updateData = req.body;
- 
-    try {
-        // Validate allowed updates -- api level validation to check what we can update
-    const allowedUpdates = ['user_id','name', 'age', 'gender','password'];
-     const isupdateAllowed = Object.keys(updateData).every((k) =>
+  const user_id = req.body.user_id;
+  const updateData = req.body;
+
+  try {
+    // Validate allowed updates -- api level validation to check what we can update
+    const allowedUpdates = ["user_id", "name", "age", "gender", "password"];
+    const isupdateAllowed = Object.keys(updateData).every((k) =>
       allowedUpdates.includes(k)
     );
     console.log(isupdateAllowed);
-    
+
     if (!isupdateAllowed) {
       throw new Error("update not allowed");
     }
-    
-    
+
     console.log(user_id);
     const result = await User.updateOne({ _id: user_id }, updateData, {
-      runValidators: true,  // to run the validators defined in the schema
+      runValidators: true, // to run the validators defined in the schema
     });
     res.send("user updated successfully");
   } catch (error) {
-    res.status(500).send("error updating user" +  error.message);
+    res.status(500).send("error updating user" + error.message);
   }
 });
 
