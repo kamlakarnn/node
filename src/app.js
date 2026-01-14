@@ -6,8 +6,11 @@ const User = require("./model/user");
 const { get } = require("mongoose");
 const { validateSignUpData } = require("./utils/validation");
 const brcypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 
 app.use(express.json()); // middlware to convert json to object
+app.use(cookieParser()); //middleware to parse cookies
 
 app.post("/insert", async (req, res) => {
   console.log(req.body);
@@ -70,17 +73,17 @@ app.post("/signup", async (req, res) => {
     validateSignUpData(req);
 
     const { password } = req.body;
-//encrypt the password before saving to db
+    //encrypt the password before saving to db
     const passwordHash = await brcypt.hash(password, 10);
-  console.log(passwordHash);
-  
- const user = new User({
-    name: req.body.name,
-    email: req.body.email,
-    age     : req.body.age, 
-    gender  : req.body.gender,
-    password: passwordHash
- });
+    console.log(passwordHash);
+
+    const user = new User({
+      name: req.body.name,
+      email: req.body.email,
+      age: req.body.age,
+      gender: req.body.gender,
+      password: passwordHash,
+    });
 
     await user.save();
     res.send("user registered successfully");
@@ -91,22 +94,61 @@ app.post("/signup", async (req, res) => {
 
 app.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;      
+    const { email, password } = req.body;
     const user = await User.findOne({ email: email });
-   
     if (!user) {
       return res.status(404).send("user not found");
     }
-    
     const isPasswordMatch = await brcypt.compare(password, user.password);
-    if (!isPasswordMatch) {
-      return res.status(401).send("invalid password");
-    }           
-    res.send("login successful");
+    // check the code of password decrept and check .
+    // if (!isPasswordMatch) {
+    //   return res.status(401).send("invalid password");
+    // }
+    // res.send("login successful");
+
+    if (isPasswordMatch) {
+      //create Jwt token .
+      const token = await jwt.sign({ _id: user._id }, "secretkey");
+      console.log(" jwt token generated :", token);
+
+      //add token to cookies and send response back to user.
+      //   res.cookie("token", "asdfghjkhgdfghjsdfghjsdffffffff11111111111111111111111111111111111111111111111");
+      res.cookie("token", token);
+      res.send("login successful");
+    } else {
+      throw new Error("invalid password");
+    }
   } catch (error) {
     res.status(400).send("error logging in :" + error.message);
   }
+});
 
+app.get("/profile",userAuth, async (req, res) => {
+  // to get the cookies from request we required cookie-parser middleware
+//   const cookies = req.cookies;
+
+//   const { token } = cookies;
+
+//   // verify the token
+//   const decodedMessage = await jwt.verify(token, "secretkey");
+//   console.log("decoded message : ", decodedMessage);
+//   // get the user id from decoded message
+//   const { _id } = decodedMessage;
+//   console.log("logged in user :" + _id);
+
+//   // fetch the user profile from db
+//   const user = await User.findOne({ _id: _id });
+//   if (!user) {
+//     return res.status(404).send("user not found");
+//   }
+try {
+const user = req.user; // user object is attached to request by auth middleware
+console.log("user profile data :", user);
+  res.json(user); // send user profile data as response
+  // console.log("redaing cookies :");
+} catch (error) {
+    res.status(500).send("error getting profile data :" + error.message);
+}
 });
 
 app.patch("/updateUser", async (req, res) => {
