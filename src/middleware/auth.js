@@ -25,7 +25,7 @@ const userAuth = async (req, res, next) => {
         }
 
         const decodedObj = await jwt.verify(token, "secretkey"); // Verify token
-        console.log("decoded object in mid: ", decodedObj);
+        // console.log("decoded object in mid: ", decodedObj);
         const {_id} = decodedObj // Get user id from decoded token
 
         // Find user by id
