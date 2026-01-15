@@ -9,7 +9,7 @@ const mongoose = require('mongoose')
 
 const connectDB = async () => {
     await mongoose.connect(
-        "mongodb+srv://kamalakargpt_db_user:RgrKwWzEFy82HW7n@cluster0.duodtb2.mongodb.net/", 
+        "mongodb+srv://kamalakargpt_db_user:RgrKwWzEFy82HW7n@cluster0.duodtb2.mongodb.net/ ", 
          {
              family: 4 // Forces the connection to use IPv4
          }
