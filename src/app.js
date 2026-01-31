@@ -11,15 +11,18 @@ const jwt = require("jsonwebtoken");
 const authRouter = require("./routes/auth.js");
 const profileRouter = require("./routes/profile.js");
 const requestRouter = require("./routes/request.js");
+const userRouter = require("./routes/user.js");
 
 app.use(express.json()); // middlware to convert json to object
 app.use(cookieParser()); //middleware to parse cookies
+
 
 
 // router
 app.use("/",authRouter);
 app.use("/",profileRouter);
 app.use("/",requestRouter);
+app.use("/",userRouter);
 
 
 // app.post("/login", async (req, res) => {
